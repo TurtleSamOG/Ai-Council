@@ -3,82 +3,45 @@ import torch
 
 class BasicAssistant:
     def __init__(self):
-        # Load tokenizer for Phi-3. This turns text <-> tokens.
+        # Load a small model that Railway can handle
         self.tokenizer = AutoTokenizer.from_pretrained(
-            "microsoft/Phi-3-mini-4k-instruct",
-            trust_remote_code=True
+            "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
 
-        # Load the Phi-3 model (CPU-friendly).
         self.model = AutoModelForCausalLM.from_pretrained(
-            "microsoft/Phi-3-mini-4k-instruct",
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,   # More efficient on CPU
-            device_map="cpu"              # Force CPU usage
+            "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+            torch_dtype=torch.float32,
+            low_cpu_mem_usage=True
         )
 
-        # Store conversation history (optional memory)
         self.history = []
 
-    def format_prompt(self, user_input):
-        """
-        Formats the prompt using an instruction style.
-        Phi-3 is an INSTRUCT model, which means it responds better
-        when the input is structured clearly.
+    def chat(self, message):
+        # Add user message to history
+        self.history.append({"role": "user", "content": message})
 
-        You can modify this prompt style later to tune behavior.
-        """
-        system_prompt = "You are a helpful AI assistant."
-        
-        # Add previous messages to maintain context (light memory)
-        conversation_text = ""
-        for item in self.history:
-            conversation_text += f"User: {item['user']}\nAssistant: {item['assistant']}\n"
+        # Build a prompt from history
+        prompt = ""
+        for turn in self.history:
+            role = turn["role"]
+            txt = turn["content"]
+            prompt += f"{role}: {txt}\n"
+        prompt += "assistant:"
 
-        # Add the new message from the user
-        conversation_text += f"User: {user_input}\nAssistant:"
+        inputs = self.tokenizer(prompt, return_tensors="pt")
 
-        # Full formatted prompt
-        return system_prompt + "\n\n" + conversation_text
-
-    def chat(self, user_input):
-        """
-        Generates a response using the Phi-3 model.
-        """
-        # Format the input for Phi-3 instruct style
-        prompt = self.format_prompt(user_input)
-
-        # Tokenize the input
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt"
-        )
-
-        # Generate output tokens (response)
+        # Generate a short response to keep Railway fast
         output_ids = self.model.generate(
             **inputs,
-            max_length=512,
-            temperature=0.2,  # Lower temperature = less randomness
-            top_p=0.9,        # Controls sampling; 1.0 = more random
-            do_sample=True    # Enables creative sampling
+            max_new_tokens=120,
+            do_sample=False,     # deterministic, faster
+            use_cache=False      # avoids the DynamicCache bug entirely
         )
 
-        # Decode tokens back into text
-        full_output = self.tokenizer.decode(
-            output_ids[0],
-            skip_special_tokens=True
-        )
+        reply = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-        # Extract only the assistant's part (everything after "Assistant:")
-        if "Assistant:" in full_output:
-            reply = full_output.split("Assistant:")[-1].strip()
-        else:
-            reply = full_output.strip()
+        # Extract only the assistant's final message
+        reply = reply.split("assistant:")[-1].strip()
 
-        # Save the exchange to the history memory
-        self.history.append({
-            "user": user_input,
-            "assistant": reply
-        })
-
+        self.history.append({"role": "assistant", "content": reply})
         return reply
