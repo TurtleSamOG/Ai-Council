@@ -21,7 +21,7 @@ def chat_endpoint(data: UserMessage):
             "X-Title": "My AI Assistant"
         },
         json={
-            "model": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct:free",
             "messages": [
                 {"role": "user", "content": data.message}
             ]
