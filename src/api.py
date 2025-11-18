@@ -5,7 +5,7 @@ import requests
 
 app = FastAPI()
 
-OPENROUTER_API_KEY = os.getenv("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")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 class UserMessage(BaseModel):
     message: str
