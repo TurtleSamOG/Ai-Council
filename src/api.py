@@ -12,14 +12,13 @@ class UserMessage(BaseModel):
 
 @app.post("/chat")
 def chat_endpoint(data: UserMessage):
-    # Send message to OpenRouter
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "HTTP-Referer": "yourdomain.com",  # optional but recommended
-            "X-Title": "My AI Assistant",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://yourapp.com",
+            "X-Title": "My AI Assistant"
         },
         json={
             "model": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
@@ -30,6 +29,13 @@ def chat_endpoint(data: UserMessage):
     )
 
     result = response.json()
+
+    # If OpenRouter returns an error
+    if "error" in result:
+        return {"response": f"OpenRouter Error: {result['error']['message']}"}
+
+    # Normal response
     reply = result["choices"][0]["message"]["content"]
     return {"response": reply}
+
 
