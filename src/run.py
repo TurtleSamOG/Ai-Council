@@ -13,3 +13,5 @@ while True:
     # Generate and print model reply
     reply = bot.chat(msg)
     print("Bot:", reply)
+
+    fszd\xdfv
