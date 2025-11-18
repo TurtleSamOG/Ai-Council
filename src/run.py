@@ -14,4 +14,4 @@ while True:
     reply = bot.chat(msg)
     print("Bot:", reply)
 
-    fszd\xdfv
+
