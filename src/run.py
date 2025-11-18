@@ -1,17 +1,23 @@
-from basic_assistant import BasicAssistant
+import requests
 
-# Create the assistant object
-bot = BasicAssistant()
+def main():
+    while True:
+        msg = input("You: ")
+        if not msg.strip():
+            continue
 
-print("AI assistant ready. Type 'exit' to quit.")
+        res = requests.post(
+            "http://localhost:8000/chat",
+            json={"message": msg}
+        )
 
-while True:
-    msg = input("You: ")
-    if msg.lower() == "exit":
-        break
+        try:
+            data = res.json()
+        except Exception:
+            print("Invalid response:", res.text)
+            continue
 
-    # Generate and print model reply
-    reply = bot.chat(msg)
-    print("Bot:", reply)
+        print("AI:", data.get("response"))
 
-
+if __name__ == "__main__":
+    main()
