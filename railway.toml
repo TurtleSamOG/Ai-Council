@@ -1,5 +1,0 @@
-[build]
-engine = "nixpacks"
-
-[build.nixpacks]
-providers = ["python"]
