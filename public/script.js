@@ -1,104 +1,90 @@
-import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
-import OpenAI from "openai";
-import "dotenv/config";
+async function sendMessage() {
+  const prompt = document.getElementById("prompt").value;
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+  appendMessage(prompt, "user");
 
-// OpenAI client
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+  const res = await fetch("http://localhost:3000/api/debate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
 
-/* ==========================================
-      MULTI-ROUND DEBATE ROUTE
-   ========================================== */
+  const data = await res.json();
 
-app.post("/api/debate", async (req, res) => {
-  try {
-    const { prompt } = req.body;
+  let currentRound = 0;
 
-    // All 3 AIs are hostile critics
-    const agents = [
-      {
-        name: "Analyst",
-        style:
-          "You are a hostile critic. Respond aggressively, challenge everyone, mock weak logic, and be confrontational."
-      },
-      {
-        name: "Critic",
-        style:
-          "You are an extremely aggressive critic. Attack bad arguments directly, be sharp, sarcastic, and confront everything said."
-      },
-      {
-        name: "Synthesizer",
-        style:
-          "You are a ruthless critic. Challenge every previous idea viciously. Do not summarize—argue hard."
-      }
-    ];
+  // SHOW DEBATE WITH ROUND HEADERS
+  data.discussion.forEach(d => {
 
-    // This will store: round, ai, message
-    let debateLog = [];
+    if (d.round !== currentRound) {
+      currentRound = d.round;
 
-    // Shared conversation context for all AIs
-    let conversationContext = [
-      { role: "user", content: prompt }
-    ];
-
-    const ROUNDS = 3; // You can change to 4 if you want
-
-    // === Debate rounds ===
-    for (let round = 1; round <= ROUNDS; round++) {
-      for (const agent of agents) {
-
-        const messages = [
-          { role: "system", content: agent.style },
-          ...conversationContext
-        ];
-
-        const response = await client.chat.completions.create({
-          model: "gpt-4.1-mini",
-          messages,
-          max_tokens: 80
-        });
-
-        const msg = response.choices[0].message.content;
-
-        debateLog.push({
-          round,
-          ai: agent.name,
-          message: msg
-        });
-
-        // Add to context so next AI reacts to it
-        conversationContext.push({
-          role: "assistant",
-          content: `${agent.name}: ${msg}`
-        });
-      }
+      appendMessage(`Round ${currentRound}`, "round-header");
     }
 
-    // Final = last Synthesizer message
-    const final = debateLog
-      .filter(m => m.ai === "Synthesizer")
-      .slice(-1)[0].message;
+    appendMessage(
+      d.message,
+      "ai",
+      d.ai,
+      getAvatarForAI(d.ai)
+    );
+  });
 
-    res.json({
-      discussion: debateLog,
-      final
-    });
+  // FINAL ANSWER
+  appendMessage(
+    data.final,
+    "ai",
+    "Final",
+    getAvatarForAI("Final")
+  );
+}
 
-  } catch (err) {
-    console.error("DEBATE ERROR:", err);
-    res.status(500).json({ error: "Internal server error" });
+function appendMessage(text, sender, name = "", avatarUrl = "") {
+  const chat = document.getElementById("chat");
+  const wrapper = document.createElement("div");
+  wrapper.className = "message " + sender + (name ? " ai-" + name : "");
+
+  // avatar
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  if (avatarUrl) {
+    avatar.style.backgroundImage = `url(${avatarUrl})`;
+    avatar.style.backgroundSize = "cover";
   }
-});
 
-/* ==========================================
-      START SERVER
-   ========================================== */
+  const content = document.createElement("div");
+  content.className = "content";
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+  const nameEl = document.createElement("div");
+  nameEl.className = "name";
+  nameEl.textContent = name || "";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+
+  content.appendChild(nameEl);
+  content.appendChild(bubble);
+
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(content);
+  chat.appendChild(wrapper);
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Avatar per AI
+function getAvatarForAI(name) {
+  switch (name) {
+    case "Analyst":
+      return "https://api.dicebear.com/7.x/shapes/svg?seed=analyst";
+    case "Critic":
+      return "https://api.dicebear.com/7.x/shapes/svg?seed=critic";
+    case "Synthesizer":
+      return "https://api.dicebear.com/7.x/shapes/svg?seed=synth";
+    case "Final":
+      return "https://api.dicebear.com/7.x/shapes/svg?seed=final";
+    default:
+      return "";
+  }
+}
