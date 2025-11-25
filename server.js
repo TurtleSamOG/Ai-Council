@@ -4,11 +4,12 @@ import bodyParser from "body-parser";
 import OpenAI from "openai";
 import "dotenv/config";
 
-app.use(express.static("public"));
+
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -138,12 +139,12 @@ Use this memory to improve your judgement and avoid repeating old reasoning word
     ];
 
     const finalResponse = await client.chat.completions.create({
-  model: "gpt-4.1-mini",
-  messages: finalMessages,
-  max_tokens: 250
-});
+      model: "gpt-4.1-mini",
+      messages: finalMessages,
+      max_tokens: 250
+    });
 
-const final = finalResponse.choices[0].message.content || "";
+    const final = finalResponse.choices[0].message.content || "";
 
     // ===== UPDATE LONG-TERM MEMORY (Hybrid C) =====
     const analystMsgs = debateLog
