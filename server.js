@@ -4,6 +4,8 @@ import bodyParser from "body-parser";
 import OpenAI from "openai";
 import "dotenv/config";
 
+app.use(express.static("public"));
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
