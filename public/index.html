@@ -12,28 +12,20 @@
 
 <body>
 
-  <!-- APP WRAPPER -->
   <div class="app">
 
-    <!-- CHAT CONTAINER (glass card) -->
     <div class="chat-container">
-
-      <!-- CHAT AREA -->
       <div id="chat"></div>
 
-      <!-- INPUT SECTION -->
       <div class="input-row">
-        <input id="prompt" placeholder="Say something..." />
+        <input id="prompt" placeholder="Say something..." onkeypress="handleKey(event)" />
         <button onclick="sendMessage()">Send</button>
       </div>
-
     </div>
 
   </div>
 
-  <!-- Your script -->
   <script src="script.js"></script>
-
 </body>
 
 </html>

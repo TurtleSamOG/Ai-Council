@@ -1,6 +1,11 @@
 async function sendMessage() {
-  const prompt = document.getElementById("prompt").value;
+  const promptInput = document.getElementById("prompt");
+  const prompt = promptInput.value;
 
+  // Clear input immediately
+  promptInput.value = "";
+
+  // USER MESSAGE
   appendMessage(prompt, "user");
 
   const res = await fetch("http://localhost:3000/api/debate", {
@@ -11,69 +16,75 @@ async function sendMessage() {
 
   const data = await res.json();
 
-  let currentRound = 0;
+  // SEQUENTIAL AI MESSAGE DISPLAY
+  for (let i = 0; i < data.discussion.length; i++) {
+    const msg = data.discussion[i];
 
-  // SHOW DEBATE WITH ROUND HEADERS
-  data.discussion.forEach(d => {
-
-    if (d.round !== currentRound) {
-      currentRound = d.round;
-
-      appendMessage(`Round ${currentRound}`, "round-header");
-    }
-
-    appendMessage(
-      d.message,
-      "ai",
-      d.ai,
-      getAvatarForAI(d.ai)
-    );
-  });
+    await showTyping(msg.ai);
+    appendMessage(msg.message, "ai", msg.ai, getAvatarForAI(msg.ai));
+  }
 
   // FINAL ANSWER
-  appendMessage(
-    data.final,
-    "ai",
-    "Final",
-    getAvatarForAI("Final")
-  );
+  await showTyping("Final");
+  appendMessage(data.final, "ai", "Final", getAvatarForAI("Final"));
+}
+
+/* typing indicator */
+function showTyping(aiName) {
+  return new Promise(resolve => {
+    const chat = document.getElementById("chat");
+
+    const wrap = document.createElement("div");
+    wrap.className = "message ai typing";
+
+    wrap.textContent = aiName + " is typing...";
+
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+
+    setTimeout(() => {
+      wrap.remove();
+      resolve();
+    }, 1400); // delay per message
+  });
 }
 
 function appendMessage(text, sender, name = "", avatarUrl = "") {
   const chat = document.getElementById("chat");
-  const wrapper = document.createElement("div");
-  wrapper.className = "message " + sender + (name ? " ai-" + name : "");
 
-  // avatar
-  const avatar = document.createElement("div");
-  avatar.className = "avatar";
-  if (avatarUrl) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "message " + sender + (name ? " " + name.toLowerCase() : "");
+
+  let avatar = null;
+  if (sender === "ai") {
+    avatar = document.createElement("div");
+    avatar.className = "avatar";
     avatar.style.backgroundImage = `url(${avatarUrl})`;
-    avatar.style.backgroundSize = "cover";
   }
 
   const content = document.createElement("div");
   content.className = "content";
 
-  const nameEl = document.createElement("div");
-  nameEl.className = "name";
-  nameEl.textContent = name || "";
+  if (name) {
+    const nameEl = document.createElement("div");
+    nameEl.className = "name";
+    nameEl.textContent = name;
+    content.appendChild(nameEl);
+  }
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
   bubble.textContent = text;
 
-  content.appendChild(nameEl);
   content.appendChild(bubble);
 
-  wrapper.appendChild(avatar);
+  if (sender === "ai") wrapper.appendChild(avatar);
   wrapper.appendChild(content);
-  chat.appendChild(wrapper);
 
+  chat.appendChild(wrapper);
   chat.scrollTop = chat.scrollHeight;
 }
 
-// Avatar per AI
 function getAvatarForAI(name) {
   switch (name) {
     case "Analyst":
@@ -86,5 +97,11 @@ function getAvatarForAI(name) {
       return "https://api.dicebear.com/7.x/shapes/svg?seed=final";
     default:
       return "";
+  }
+}
+
+function handleKey(e) {
+  if (e.key === "Enter") {
+    sendMessage();
   }
 }
