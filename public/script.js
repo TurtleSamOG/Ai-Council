@@ -8,7 +8,7 @@ async function sendMessage() {
   // USER MESSAGE
   appendMessage(prompt, "user");
 
-  const res = await fetch("http://localhost:3000/api/debate", {
+  const res = await fetch("/api/debate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt })
