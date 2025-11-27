@@ -1,5 +1,5 @@
 /* =========================================================
-   GLOBAL RESET
+   GLOBAL RESET + FOUNDATION
 ========================================================= */
 *,
 *::before,
@@ -9,244 +9,321 @@
   box-sizing: border-box;
 }
 
-/* =========================================================
-   THEME TOKENS
-========================================================= */
-:root {
-  --bg: #0d1117;
-  --bg-glass: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.12);
-  --text: #e2e8f0;
-  --text-dim: #94a3b8;
-
-  --analyst: #38bdf8;
-  --critic: #ef4444;
-  --final: #3ba8ff;
-
-  --user-grad1: #8b5cf6;
-  --user-grad2: #38bdf8;
-
-  --card-radius: 18px;
-  --bubble-radius: 16px;
-  --glass-blur: blur(40px);
-}
-
-/* =========================================================
-   LAYOUT
-========================================================= */
 html, body {
   height: 100%;
-  background: var(--bg);
-  font-family: "Inter", system-ui, sans-serif;
-  color: var(--text);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 22px;
+  overflow: hidden;
+  font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
+  background: #0a0d14;
+  color: #e2e8f0;
 }
 
 /* =========================================================
-   APP WRAPPER (Glass panel)
+   BACKGROUND — DYNAMIC NEBULA + NOISE OVERLAY
 ========================================================= */
-.app {
-  width: 100%;
-  max-width: 900px;
-  height: 90vh;
 
-  background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--card-radius);
-  box-shadow: 0 0 80px rgba(0, 0, 0, 0.35);
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.25), transparent 55%),
+    radial-gradient(circle at 80% 90%, rgba(168, 85, 247, 0.25), transparent 55%),
+    linear-gradient(145deg, #020617, #0f172a 80%);
+  filter: blur(90px);
+  z-index: -2;
+}
+
+body::after {
+  /* film grain */
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("https://grainy-gradients.vercel.app/noise.svg");
+  opacity: 0.08;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* =========================================================
+   APP WRAPPER — FLOATING 3D PANEL
+========================================================= */
+
+.app {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  height: 92vh;
+  margin: 0 auto;
+  margin-top: 20px;
+
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 26px;
+
+  box-shadow:
+    0 0 120px rgba(0, 0, 0, 0.65),
+    0 40px 90px rgba(0, 0, 0, 0.45);
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
+
+  transform: perspective(1200px) translateZ(0px) rotateX(0deg);
+  animation: panelEntrance 1.2s ease;
+}
+
+/* 3D entrance animation */
+@keyframes panelEntrance {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) translateY(60px) rotateX(12deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) translateY(0) rotateX(0deg);
+  }
 }
 
 /* =========================================================
-   CHAT AREA
+   CHAT AREA — CINEMATIC DEPTH
 ========================================================= */
+
 #chat {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  scroll-behavior: smooth;
+  gap: 26px;
+  position: relative;
 }
 
-/* ===== Scrollbar ===== */
+/* Top fade */
+#chat::before {
+  content: "";
+  position: sticky;
+  top: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(10, 13, 20, 0.7), transparent);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Bottom fade */
+#chat::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(10, 13, 20, 0.7), transparent);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Scrollbar */
 #chat::-webkit-scrollbar {
   width: 8px;
 }
+
 #chat::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 50px;
 }
 
 /* =========================================================
    MESSAGE STRUCTURE
 ========================================================= */
+
 .message {
   display: flex;
-  gap: 14px;
-  animation: fadeIn 0.25s ease-out forwards;
-  max-width: 80%;
+  gap: 16px;
+  width: 100%;
+  max-width: 75%;
+  animation: msgPop 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin: bottom left;
+}
+
+@keyframes msgPop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .message.user {
   align-self: flex-end;
   flex-direction: row-reverse;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  max-width: 70%;
 }
 
 /* =========================================================
-   AVATAR
+   AVATARS — GLOW & DEPTH
 ========================================================= */
+
 .avatar {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  flex-shrink: 0;
   background-size: cover;
   background-position: center;
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 12px rgba(255,255,255,0.12);
-  flex-shrink: 0;
+
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.15),
+    inset 0 0 18px rgba(255, 255, 255, 0.1);
 }
 
-/* AI color borders */
-.ai-Analyst .avatar { border-color: var(--analyst); }
-.ai-Critic .avatar { border-color: var(--critic); }
-.ai-Final .avatar { border-color: var(--final); }
+/* AIs get neon glow borders */
+.ai-Analyst .avatar {
+  border-color: #38bdf8;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.6);
+}
+
+.ai-Critic .avatar {
+  border-color: #ef4444;
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.6);
+}
+
+.ai-Final .avatar {
+  border-color: #3ba8ff;
+  box-shadow: 0 0 18px rgba(59, 168, 255, 0.6);
+}
 
 /* =========================================================
-   BUBBLE + TEXT
+   MESSAGE BUBBLES — PREMIUM LAYERS
 ========================================================= */
+
 .content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .name {
   font-size: 0.75rem;
-  color: var(--text-dim);
-  padding-left: 4px;
+  letter-spacing: 0.03em;
+  color: #9aa5b8;
+  margin-left: 4px;
 }
 
 .bubble {
-  padding: 14px 18px;
-  border-radius: var(--bubble-radius);
-  line-height: 1.45;
-  font-size: 0.96rem;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(12px);
-  max-width: 60%;
+  padding: 14px 20px;
+  border-radius: 18px;
+  font-size: 0.98rem;
+  line-height: 1.55;
   word-break: break-word;
+
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 0 30px rgba(255, 255, 255, 0.04),
+    0 8px 22px rgba(0, 0, 0, 0.3);
 }
 
 /* =========================================================
-   USER BUBBLE (Right side)
+   USER BUBBLE — PREMIUM GRADIENT
 ========================================================= */
+
 .message.user .bubble {
-  background: linear-gradient(135deg, var(--user-grad1), var(--user-grad2));
-  color: #0a0c12;
+  background: linear-gradient(135deg, #8b5cf6, #38bdf8);
+  color: #05070d;
   border: none;
   font-weight: 600;
+  box-shadow:
+    0 4px 14px rgba(56, 189, 248, 0.35),
+    0 0 20px rgba(139, 92, 246, 0.3);
 }
 
 /* =========================================================
-   ANALYST BUBBLE — calm procedural blue
+   AI THEMES — COMPLEX VISUALS
 ========================================================= */
+
 .ai-Analyst .bubble {
   background: rgba(56, 189, 248, 0.12);
-  border-color: var(--analyst);
+  border-color: #38bdf8;
   color: #dbeafe;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
 }
 
-/* =========================================================
-   CRITIC BUBBLE — readable deep red
-========================================================= */
 .ai-Critic .bubble {
   background: rgba(239, 68, 68, 0.12);
-  border-color: var(--critic);
+  border-color: #ef4444;
   color: #fecaca;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
 }
 
-/* =========================================================
-   FINAL DECISION — bright strong cyan
-========================================================= */
 .ai-Final .bubble {
   background: linear-gradient(135deg, #5cc4ff, #3ba8ff);
-  color: #041e3a;
+  color: #021526;
   font-weight: 600;
+  box-shadow: 
+    0 0 20px rgba(59, 168, 255, 0.35),
+    0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* =========================================================
-   INPUT BAR
+   INPUT BAR — LUXURY UI
 ========================================================= */
+
 .input-row {
-  padding: 18px;
-  border-top: 1px solid var(--border-glass);
-
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(30px);
-
+  padding: 20px;
   display: flex;
-  gap: 12px;
+  gap: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
 }
 
 #prompt {
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 50px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: var(--text);
-  outline: none;
+  padding: 14px 20px;
   font-size: 1rem;
+
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  outline: none;
+  color: #fff;
+
+  transition: 0.2s ease;
 }
 
 #prompt:focus {
-  border-color: var(--analyst);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  border-color: #38bdf8;
+  box-shadow:
+    0 0 14px rgba(56, 189, 248, 0.5),
+    0 0 40px rgba(168, 85, 247, 0.25);
 }
 
-/* =========================================================
-   SEND BUTTON
-========================================================= */
+/* SEND BUTTON */
 button {
-  padding: 12px 20px;
-  border-radius: 50px;
-  background: linear-gradient(135deg, var(--user-grad1), var(--user-grad2));
-  color: #0a0c12;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #8b5cf6, #38bdf8);
   border: none;
+  border-radius: 50px;
   font-weight: 700;
+  color: #08121d;
   cursor: pointer;
   letter-spacing: 0.03em;
-  transition: 0.15s ease;
+
+  box-shadow:
+    0 6px 20px rgba(56, 189, 248, 0.35),
+    0 0 20px rgba(139, 92, 246, 0.3);
+
+  transition: 0.2s ease;
 }
 
 button:hover {
-  filter: brightness(1.08);
   transform: translateY(-2px);
+  filter: brightness(1.15);
 }
 
 button:active {
-  transform: translateY(1px) scale(0.98);
+  transform: translateY(2px) scale(0.98);
 }
